@@ -1,13 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MapView from './components/MapView';
 import { producers } from './components/mockData';
+import Cart from './components/Cart';
 
 const App: React.FC = () => {
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [showCart, setShowCart] = useState(false);
+
+  const addToCart = (product: any) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prev, { ...product, quantity: 1 }];
+      }
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-background text-text font-sans">
+    <div className="min-h-screen bg-background text-text font-sans relative">
       {/* Header */}
-      <header className="bg-primary text-white px-6 py-4 shadow">
+      <header className="bg-primary text-white px-6 py-4 shadow flex justify-between items-center">
         <h1 className="text-2xl font-bold">🌿 Smaknara</h1>
+        <button onClick={() => setShowCart(true)} className="relative">
+          🛒
+          {cartItems.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full px-2 py-0.5">
+              {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
+        </button>
       </header>
 
       {/* Hero Section */}
@@ -41,14 +68,17 @@ const App: React.FC = () => {
                   <h4 className="text-lg font-semibold text-primary">{product.name}</h4>
                   <p className="text-sm text-gray-700 mb-2">From {p.name}</p>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {product.tags.map((tag, i) => (
+                    {product.tags.map((tag: string, i: number) => (
                       <span key={i} className="bg-accent text-white text-xs px-2 py-1 rounded-full">
                         {tag}
                       </span>
                     ))}
                   </div>
                   <p className="font-bold text-md">{product.price} kr</p>
-                  <button className="mt-3 w-full bg-primary hover:bg-hover text-white py-2 px-4 rounded-md transition">
+                  <button
+                    onClick={() => addToCart(product)}
+                    className="mt-3 w-full bg-primary hover:bg-hover text-white py-2 px-4 rounded-md transition"
+                  >
                     Add to Cart
                   </button>
                 </div>
@@ -62,6 +92,9 @@ const App: React.FC = () => {
       <footer className="text-center text-sm text-gray-600 py-6 mt-10 border-t">
         © 2025 Smaknara. Supporting local, one bite at a time.
       </footer>
+
+      {/* Cart Sidebar */}
+      {showCart && <Cart items={cartItems} onClose={() => setShowCart(false)} />}
     </div>
   );
 };
