@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MapView from './components/MapView';
 import { producers } from './components/mockData';
 import Cart from './components/Cart';
+import Checkout from './components/Checkout';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
-const App: React.FC = () => {
-  React.useEffect(() => {
-    localStorage.setItem('smaknara_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+const Home: React.FC = () => {
   const [cartItems, setCartItems] = useState<any[]>(() => {
     const stored = localStorage.getItem('smaknara_cart');
     return stored ? JSON.parse(stored) : [];
   });
   const [showCart, setShowCart] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('smaknara_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const addToCart = (product: any) => {
     setCartItems(prev => {
@@ -33,14 +37,19 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="bg-primary text-white px-6 py-4 shadow flex justify-between items-center">
         <h1 className="text-2xl font-bold">🌿 Smaknara</h1>
-        <button onClick={() => setShowCart(true)} className="relative">
-          🛒
-          {cartItems.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full px-2 py-0.5">
-              {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-            </span>
-          )}
-        </button>
+        <div className="flex gap-4 items-center">
+          <button onClick={() => navigate('/checkout', { state: { cart: cartItems } })} className="underline text-sm">
+            Checkout
+          </button>
+          <button onClick={() => setShowCart(true)} className="relative">
+            🛒
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full px-2 py-0.5">
+                {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Hero Section */}
@@ -104,5 +113,14 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <Router>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/checkout" element={<Checkout />} />
+    </Routes>
+  </Router>
+);
 
 export default App;
