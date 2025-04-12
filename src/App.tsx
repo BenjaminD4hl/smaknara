@@ -35,13 +35,23 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {producers.flatMap(p =>
             p.products.map(product => (
-              <div key={product.id} className="bg-background rounded-xl p-4 shadow">
-                <h4 className="text-lg font-semibold text-primary">{product.name}</h4>
-                <p className="text-sm text-gray-700">From {p.name}</p>
-                <p className="font-bold mt-2">{product.price} kr</p>
-                <button className="mt-4 w-full bg-accent hover:bg-primary text-white py-2 px-4 rounded-md transition">
-                  Add to Cart
-                </button>
+              <div key={product.id} className="bg-background rounded-xl overflow-hidden shadow hover:shadow-lg transition">
+                <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
+                <div className="p-4">
+                  <h4 className="text-lg font-semibold text-primary">{product.name}</h4>
+                  <p className="text-sm text-gray-700 mb-2">From {p.name}</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {product.tags.map((tag, i) => (
+                      <span key={i} className="bg-accent text-white text-xs px-2 py-1 rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="font-bold text-md">{product.price} kr</p>
+                  <button className="mt-3 w-full bg-primary hover:bg-hover text-white py-2 px-4 rounded-md transition">
+                    Add to Cart
+                  </button>
+                </div>
               </div>
             ))
           )}

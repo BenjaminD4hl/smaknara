@@ -5,9 +5,21 @@ export const producers = [
     lat: 59.3293,
     lng: 18.0686,
     products: [
-      { id: 101, name: 'Ekologiska ägg', price: 30 },
-      { id: 102, name: 'Potatis (1kg)', price: 15 }
-    ]
+      {
+        id: 101,
+        name: 'Ekologiska ägg (12 st)',
+        price: 35,
+        image: 'https://source.unsplash.com/400x300/?eggs',
+        tags: ['eco', 'organic'],
+      },
+      {
+        id: 102,
+        name: 'Potatis (1kg)',
+        price: 15,
+        image: 'https://source.unsplash.com/400x300/?potatoes',
+        tags: ['local'],
+      },
+    ],
   },
   {
     id: 2,
@@ -15,8 +27,13 @@ export const producers = [
     lat: 59.3325,
     lng: 18.0649,
     products: [
-      { id: 201, name: 'Lokal honung', price: 45 },
-      { id: 202, name: 'Bivaxljus', price: 60 }
-    ]
-  }
+      {
+        id: 201,
+        name: 'Lokal honung (350g)',
+        price: 45,
+        image: 'https://source.unsplash.com/400x300/?honey',
+        tags: ['honey', 'eco'],
+      },
+    ],
+  },
 ];
