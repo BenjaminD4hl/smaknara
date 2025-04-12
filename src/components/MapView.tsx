@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { producers } from './mockData';
+
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
 
 const loadGoogleMaps = (apiKey: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+    if (window.google && window.google.maps) {
       resolve();
       return;
     }
@@ -15,66 +23,65 @@ const loadGoogleMaps = (apiKey: string): Promise<void> => {
     }
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
-        resolve();
-      } else {
-        reject(new Error('Google Maps failed to load'));
-      }
-    };
-    script.onerror = () => reject(new Error('Google Maps script failed to load'));
+    script.onerror = reject;
+
     document.head.appendChild(script);
+    window.initMap = () => resolve();
   });
 };
 
 const MapView: React.FC = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
-    console.log("MapView mounted");
+    const initMap = async () => {
+      try {
+        await loadGoogleMaps(apiKey);
 
-    loadGoogleMaps("AIzaSyCrT-ASIGi6vRLNG894y-aYFkG4DOU7Ic8")
-      .then(() => {
-        console.log("✅ Google Maps loaded");
+        if (!mapRef.current || !window.google) return;
 
-        if (!mapRef.current) return;
-
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const { latitude, longitude } = pos.coords;
-          console.log("User location:", latitude, longitude);
-
-          const map = new window.google.maps.Map(mapRef.current, {
-            center: { lat: latitude, lng: longitude },
-            zoom: 12,
-          });
-
-          producers.forEach((producer) => {
-            new window.google.maps.Marker({
-              position: { lat: producer.lat, lng: producer.lng },
-              map,
-              title: producer.name,
-            });
-          });
-
-          setMapLoaded(true);
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: { lat: 59.3, lng: 18.0 },
+          zoom: 11,
         });
-      })
-      .catch((err) => {
-        console.error("❌ Error loading Google Maps:", err);
-      });
-  }, []);
+
+        producers.forEach((producer, index) => {
+          const marker = new window.google.maps.Marker({
+            position: { lat: producer.lat, lng: producer.lng },
+            map,
+            title: producer.name,
+          });
+
+          // Animate marker drop using setTimeout + framer motion-like bounce
+          setTimeout(() => {
+            marker.setAnimation(window.google.maps.Animation.DROP);
+          }, index * 200);
+        });
+
+        setLoaded(true);
+        console.log('✅ Google Maps loaded');
+      } catch (error) {
+        console.error('❌ Failed to load Google Maps', error);
+      }
+    };
+
+    initMap();
+  }, [apiKey]);
 
   return (
-    <div>
-      {!mapLoaded && <p>Loading map...</p>}
-      <div ref={mapRef} style={{ height: '400px', width: '100%' }} />
-    </div>
+    <motion.div
+      ref={mapRef}
+      className="w-full h-[300px] sm:h-[400px]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: loaded ? 1 : 0 }}
+      transition={{ duration: 0.8 }}
+    />
   );
 };
 
 export default MapView;
-
