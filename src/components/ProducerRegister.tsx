@@ -1,80 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
+
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
 
 const ProducerRegister: React.FC = () => {
-  const [submitted, setSubmitted] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     location: '',
     description: ''
   });
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+  }, []);
+
+  const handleSignIn = () => {
+    signInWithPopup(auth, provider).catch((err) => {
+      console.error("Sign-in error:", err);
+    });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     try {
-      await addDoc(collection(db, 'producers'), formData);
-      setSubmitted(true);
-    } catch (err) {
-      console.error("❌ Failed to save producer:", err);
+      await setDoc(doc(db, 'producers', user.uid), {
+        ...formData,
+        createdBy: user.uid,
+        email: user.email
+      });
+      setSuccess(true);
+    } catch (error) {
+      console.error("Error saving producer:", error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-text p-6 font-sans max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold text-primary mb-6 text-center">👩‍🌾 Become a Producer</h1>
-      {submitted ? (
-        <div className="text-center text-green-600 text-lg font-medium">
-          ✅ Thank you! Your application has been received. We'll be in touch soon.
-        </div>
+    <div className="min-h-screen p-6 max-w-xl mx-auto text-text font-sans">
+      <h1 className="text-2xl font-bold mb-4 text-primary">Register Your Producer Profile</h1>
+
+      {!user ? (
+        <button onClick={handleSignIn} className="bg-primary text-white py-2 px-4 rounded">
+          🔐 Sign in with Google
+        </button>
+      ) : success ? (
+        <p className="text-green-600">✅ Registered! You can now visit your dashboard.</p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Your Name or Farm Name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            required
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-          <input
-            type="text"
-            name="location"
-            placeholder="Location (e.g., Örebro, Sweden)"
-            required
-            value={formData.location}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-          <textarea
-            name="description"
-            placeholder="Tell us about what you produce..."
-            required
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full p-2 border rounded h-24"
-          />
-          <button
-            type="submit"
-            className="w-full bg-primary hover:bg-hover text-white py-3 rounded-md transition"
-          >
-            🚀 Submit Application
-          </button>
+          <input type="text" name="name" placeholder="Producer Name" required value={formData.name} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input type="text" name="location" placeholder="Location" required value={formData.location} onChange={handleChange} className="w-full p-2 border rounded" />
+          <textarea name="description" placeholder="Short Description" required value={formData.description} onChange={handleChange} className="w-full p-2 border rounded h-24" />
+          <button type="submit" className="bg-primary text-white py-2 px-4 rounded w-full">📬 Register Producer</button>
         </form>
       )}
     </div>
