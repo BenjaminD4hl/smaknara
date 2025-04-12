@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const ProducerRegister: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -13,11 +15,14 @@ const ProducerRegister: React.FC = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🧑‍🌾 New Producer Registered:", formData);
-    setSubmitted(true);
-    // Here you can connect to Firebase with addDoc(...) etc.
+    try {
+      await addDoc(collection(db, 'producers'), formData);
+      setSubmitted(true);
+    } catch (err) {
+      console.error("❌ Failed to save producer:", err);
+    }
   };
 
   return (
