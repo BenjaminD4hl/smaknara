@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Checkout: React.FC = () => {
@@ -6,7 +6,20 @@ const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const cartItems = location.state?.cart || [];
 
+  const [processing, setProcessing] = useState(false);
+  const [paid, setPaid] = useState(false);
+
   const total = cartItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+
+  const handleSwishPayment = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      setPaid(true);
+      localStorage.removeItem('smaknara_cart');
+      setTimeout(() => navigate('/'), 2000);
+    }, 3000);
+  };
 
   return (
     <div className="min-h-screen bg-background text-text p-6 font-sans">
@@ -36,9 +49,18 @@ const Checkout: React.FC = () => {
             <textarea placeholder="Message to producer (optional)" className="w-full p-2 border rounded h-24"></textarea>
           </form>
 
-          <button className="w-full bg-primary hover:bg-hover text-white py-3 rounded-md transition">
-            🟢 Pay with Swish (Coming Soon)
-          </button>
+          {processing ? (
+            <div className="text-center text-lg font-medium text-gray-600">🔄 Waiting for Swish confirmation...</div>
+          ) : paid ? (
+            <div className="text-center text-lg font-bold text-green-600">✅ Payment received! Redirecting...</div>
+          ) : (
+            <button
+              onClick={handleSwishPayment}
+              className="w-full bg-primary hover:bg-hover text-white py-3 rounded-md transition"
+            >
+              🟢 Pay with Swish (Simulated)
+            </button>
+          )}
         </>
       )}
     </div>
