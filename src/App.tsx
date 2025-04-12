@@ -4,7 +4,13 @@ import { producers } from './components/mockData';
 import Cart from './components/Cart';
 
 const App: React.FC = () => {
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  React.useEffect(() => {
+    localStorage.setItem('smaknara_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+  const [cartItems, setCartItems] = useState<any[]>(() => {
+    const stored = localStorage.getItem('smaknara_cart');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [showCart, setShowCart] = useState(false);
 
   const addToCart = (product: any) => {
