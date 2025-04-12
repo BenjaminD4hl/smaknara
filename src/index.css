@@ -1,1 +1,19 @@
-body { margin: 0; font-family: Arial, sans-serif; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-background text-text font-sans;
+}
+
+h1, h2, h3 {
+  @apply text-primary;
+}
+
+button {
+  @apply bg-primary text-white px-4 py-2 rounded-md transition;
+}
+
+button:hover {
+  @apply bg-hover;
+}
