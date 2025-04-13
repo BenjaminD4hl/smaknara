@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  apiKey: AIzaSyDRODyrbORNhTb5fS11gRoPi_PsFO-Fuao,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: 'smaknara',
   storageBucket: 'smaknara.appspot.com',
