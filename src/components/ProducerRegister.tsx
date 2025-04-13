@@ -1,74 +1,120 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
-import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+// src/pages/ProducerRegister.tsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase'; // Adjust import path as needed
 
-const auth = getAuth();
-const provider = new GoogleAuthProvider();
+interface ProducerRegisterProps {
+  // If you need props, define them here. Otherwise, you can omit this interface.
+}
 
-const ProducerRegister: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    location: '',
-    description: ''
-  });
-  const [success, setSuccess] = useState(false);
+const ProducerRegister: React.FC<ProducerRegisterProps> = () => {
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-  }, []);
+  // Basic state for producer info
+  const [producerName, setProducerName] = useState('');
+  const [location, setLocation] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const handleSignIn = () => {
-    signInWithPopup(auth, provider).catch((err) => {
-      console.error("Sign-in error:", err);
-    });
-  };
+  // Optional: if the user is logged in, you might have a user ID from auth
+  const userId = 'dummy-user-id'; // Replace with real userID from Firebase Auth
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImageFile(e.target.files[0]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+
     try {
-      await setDoc(doc(db, 'producers', user.uid), {
-        ...formData,
-        createdBy: user.uid,
-        email: user.email
+      // 1. Create a doc reference in Firestore for the new/updated producer
+      const producerRef = doc(db, 'producers', userId);
+
+      // 2. If an image file is chosen, upload it to Firebase Storage
+      let profileImageUrl = '';
+      if (imageFile) {
+        const imageRef = ref(
+          storage,
+          `producer-images/${userId}/${imageFile.name}`
+        );
+        await uploadBytes(imageRef, imageFile);
+        profileImageUrl = await getDownloadURL(imageRef);
+      }
+
+      // 3. Save the producer data in Firestore
+      await setDoc(producerRef, {
+        name: producerName,
+        location: location,
+        profileImage: profileImageUrl,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
-      setSuccess(true);
+
+      // 4. Navigate user to their new profile (optional)
+      navigate(`/producers/${userId}`);
     } catch (error) {
-      console.error("Error saving producer:", error);
+      console.error('Error registering producer:', error);
     }
   };
 
   return (
-    <div className="min-h-screen p-6 max-w-xl mx-auto text-text font-sans">
-      <h1 className="text-2xl font-bold mb-4 text-primary">Register Your Producer Profile</h1>
+    <div className="max-w-md mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Register as a Producer</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="producerName" className="block mb-1 font-medium">
+            Producer Name
+          </label>
+          <input
+            id="producerName"
+            type="text"
+            value={producerName}
+            onChange={(e) => setProducerName(e.target.value)}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+        </div>
 
-      {!user ? (
-        <button onClick={handleSignIn} className="bg-primary text-white py-2 px-4 rounded">
-          🔐 Sign in with Google
+        <div>
+          <label htmlFor="location" className="block mb-1 font-medium">
+            Location
+          </label>
+          <input
+            id="location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="image" className="block mb-1 font-medium">
+            Profile Picture
+          </label>
+          <input
+            id="image"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="w-full"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500"
+        >
+          Submit
         </button>
-      ) : success ? (
-        <p className="text-green-600">✅ Registered! You can now visit your dashboard.</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="text" name="name" placeholder="Producer Name" required value={formData.name} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input type="text" name="location" placeholder="Location" required value={formData.location} onChange={handleChange} className="w-full p-2 border rounded" />
-          <textarea name="description" placeholder="Short Description" required value={formData.description} onChange={handleChange} className="w-full p-2 border rounded h-24" />
-          <button type="submit" className="bg-primary text-white py-2 px-4 rounded w-full">📬 Register Producer</button>
-        </form>
-      )}
+      </form>
     </div>
   );
 };
 
 export default ProducerRegister;
+

@@ -1,68 +1,64 @@
+// src/pages/ProducerProfile.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+
+interface Producer {
+  name: string;
+  location: string;
+  profileImage?: string;
+}
 
 const ProducerProfile: React.FC = () => {
   const { producerId } = useParams();
-  const [producer, setProducer] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [producer, setProducer] = useState<Producer | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchProducerAndProducts = async () => {
+    const fetchProducer = async () => {
       if (!producerId) return;
 
       try {
-        const docRef = doc(db, 'producers', producerId);
-        const docSnap = await getDoc(docRef);
+        const producerRef = doc(db, 'producers', producerId);
+        const docSnap = await getDoc(producerRef);
         if (docSnap.exists()) {
-          setProducer(docSnap.data());
-
-          const q = query(collection(db, 'products'), where('producerId', '==', producerId));
-          const querySnapshot = await getDocs(q);
-          const productList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setProducts(productList);
-        } else {
-          setProducer(null);
+          setProducer(docSnap.data() as Producer);
         }
-      } catch (err) {
-        console.error('Error fetching producer and products:', err);
-        setProducer(null);
+      } catch (error) {
+        console.error('Error fetching producer:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProducerAndProducts();
+    fetchProducer();
   }, [producerId]);
 
-  if (producer === null) {
-    return (
-      <div className="min-h-screen p-6 text-center text-gray-600">
-        <p>❌ Producer not found or loading...</p>
-      </div>
-    );
+  if (loading) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
+
+  if (!producer) {
+    return <div className="text-center p-4">Producer not found.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-white text-text font-sans p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-primary mb-4">{producer.name}</h1>
-      <p className="text-gray-600 text-sm mb-2">📍 {producer.location}</p>
-      <p className="text-md mb-6">{producer.description}</p>
-
-      <h2 className="text-2xl font-semibold mb-4">🛍 Products</h2>
-      {products.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {products.map((product) => (
-            <div key={product.id} className="border p-4 rounded shadow-sm">
-              <h3 className="text-lg font-bold">{product.name}</h3>
-              <p className="text-sm text-gray-500">{product.category}</p>
-              <p className="text-md font-semibold mt-1">{product.price} kr</p>
-              {product.image && <img src={product.image} alt={product.name} className="w-full h-32 object-cover mt-2 rounded" />}
-            </div>
-          ))}
-        </div>
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-2">{producer.name}</h1>
+      {producer.profileImage ? (
+        <img
+          src={producer.profileImage}
+          alt={`${producer.name}'s profile`}
+          className="w-40 h-40 object-cover rounded-full mb-4"
+        />
       ) : (
-        <p className="text-gray-500">No products listed yet.</p>
+        <div className="w-40 h-40 bg-gray-200 rounded-full mb-4 flex items-center justify-center">
+          No Image
+        </div>
       )}
+      <p className="mb-4">Location: {producer.location}</p>
+      {/* You can extend this with product listings, reviews, etc. */}
     </div>
   );
 };
