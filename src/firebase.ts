@@ -1,20 +1,19 @@
-// src/firebase.ts
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: AIzaSyDRODyrbORNhTb5fS11gRoPi_PsFO-Fuao,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: 'smaknara',
-  storageBucket: 'smaknara.appspot.com',
-  messagingSenderId: '460067712570',
-  appId: '1:460067712570:web:c9b8331bcde1a3454c0f03', // Optional unless you use analytics
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app); // ✅ Added this line
+export const storage = getStorage(app);
+export const auth = getAuth(app); // ✅ lägg till denna
