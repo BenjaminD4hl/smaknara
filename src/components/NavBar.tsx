@@ -1,6 +1,6 @@
 // src/components/NavBar.tsx
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart,
   Home as HomeIcon,
@@ -16,6 +16,7 @@ import { auth } from '../firebase';
 const NavBar: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -23,6 +24,11 @@ const NavBar: React.FC = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate('/');
+  };
 
   const linkClasses = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-2 px-4 py-2 hover:bg-green-100 rounded-md ${
@@ -40,20 +46,22 @@ const NavBar: React.FC = () => {
           {/* Desktop links */}
           <div className="hidden sm:flex gap-4">
             <NavLink to="/" className={linkClasses}>
-              <HomeIcon size={20} /> Home
+              <HomeIcon size={20} /> Hem
             </NavLink>
             <NavLink to="/browse" className={linkClasses}>
-              🗺️ Browse
+              🗺️ Karta
             </NavLink>
             <NavLink to="/checkout" className={linkClasses}>
-              <ShoppingCart size={20} /> Cart
+              <ShoppingCart size={20} /> Varukorg
             </NavLink>
             <NavLink to="/register-producer" className={linkClasses}>
-              <Store size={20} /> Sell
+              <Store size={20} /> Bli producent
             </NavLink>
-            <NavLink to="/profile" className={linkClasses}>
-              <User size={20} /> Profile
-            </NavLink>
+            {user && (
+              <NavLink to="/producers/${user.uid}" className={linkClasses}>
+                <User size={20} /> Min profil
+              </NavLink>
+            )}
           </div>
 
           {/* User info */}
@@ -68,9 +76,9 @@ const NavBar: React.FC = () => {
               ) : (
                 <User size={20} />
               )}
-              <span className="text-sm text-gray-700">{user.displayName || 'User'}</span>
+              <span className="text-sm text-gray-700">{user.displayName || 'Användare'}</span>
               <button
-                onClick={() => signOut(auth)}
+                onClick={handleLogout}
                 className="text-sm text-red-600 hover:underline"
               >
                 <LogOut size={18} />
@@ -79,7 +87,7 @@ const NavBar: React.FC = () => {
           ) : (
             <NavLink to="/login" className="flex items-center gap-2 text-sm text-green-700 hover:underline">
               <LogIn size={18} />
-              Login
+              Logga in
             </NavLink>
           )}
 
@@ -98,34 +106,44 @@ const NavBar: React.FC = () => {
       {menuOpen && (
         <div className="sm:hidden flex flex-col gap-2 px-4 pb-3">
           <NavLink to="/" className={linkClasses} onClick={() => setMenuOpen(false)}>
-            <HomeIcon size={20} /> Home
+            <HomeIcon size={20} /> Hem
           </NavLink>
           <NavLink to="/browse" className={linkClasses} onClick={() => setMenuOpen(false)}>
-            🗺️ Browse
+            🗺️ Karta
           </NavLink>
           <NavLink to="/checkout" className={linkClasses} onClick={() => setMenuOpen(false)}>
-            <ShoppingCart size={20} /> Cart
+            <ShoppingCart size={20} /> Varukorg
           </NavLink>
           <NavLink to="/register-producer" className={linkClasses} onClick={() => setMenuOpen(false)}>
-            <Store size={20} /> Sell
+            <Store size={20} /> Bli producent
           </NavLink>
-          <NavLink to="/profile" className={linkClasses} onClick={() => setMenuOpen(false)}>
-            <User size={20} /> Profile
-          </NavLink>
+          {user && (
+            <NavLink
+              to={`/producers/${user.uid}`}
+              className={linkClasses}
+              onClick={() => setMenuOpen(false)}
+            >
+              <User size={20} /> Min profil
+            </NavLink>
+          )}
           {user ? (
             <button
               onClick={() => {
-                signOut(auth);
+                handleLogout();
                 setMenuOpen(false);
               }}
               className="flex items-center gap-2 text-sm text-red-600"
             >
               <LogOut size={18} />
-              Log out
+              Logga ut
             </button>
           ) : (
-            <NavLink to="/login" className={linkClasses} onClick={() => setMenuOpen(false)}>
-              <LogIn size={18} /> Login
+            <NavLink
+              to="/login"
+              className={linkClasses}
+              onClick={() => setMenuOpen(false)}
+            >
+              <LogIn size={18} /> Logga in
             </NavLink>
           )}
         </div>
